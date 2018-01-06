@@ -1,0 +1,182 @@
+C51 COMPILER V7.10   SERIAL                                                                04/10/2016 10:18:45 PAGE 1   
+
+
+C51 COMPILER V7.10, COMPILATION OF MODULE SERIAL
+OBJECT MODULE PLACED IN serial.OBJ
+COMPILER INVOKED BY: d:\program files\Keil\C51\BIN\C51.EXE serial.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "serial.h"
+   2          #include "coon.h"
+   3          #include <reg52.h>
+   4          
+   5          /*
+   6                  使用了串口中断,定时器1中断
+   7              定时器初值计算公式:
+   8                  x = 2^n - (2^SMOD * fosc) / (32 * bps * 12 )
+   9                          n: 单次收发的数据位数
+  10                      SMOD: 波特率加倍位数(PCON.7)
+  11              x = 2^8 - (2^0 * 11.0592 * 10^6) / ( 32 * 9600 * 12) = 253 = 0xFD
+  12                  x = 2^8 - (2^0 * 12 * 10^6) / ( 32 * 9600 * 12 ) =
+  13          */
+  14          
+  15          uchar buff_serial[MAXLEN_BUFF_SERIAL]={0};
+  16          uchar pwrite_serial=0, pread_serial=0;
+  17          
+  18          /*********************************************************************
+  19           原型: void init_serial()
+  20           功能: 初始化串口
+  21          *********************************************************************/
+  22          void init_serial()
+  23          {
+  24   1              //置定时器1工作于8位自动重载模式,用于产生波特率(并保持定时器0信息位的设置)
+  25   1              TMOD = (TMOD & 0x0F) | 0x20;
+  26   1              //波特率不倍增(并保留非串口信息位的设置)
+  27   1              PCON = PCON & 0x7F;
+  28   1              //8位URT,波特率可变,(T1溢出率/n),允许接收
+  29   1          SCON = 0x50;
+  30   1              //波特率9600
+  31   1              #ifdef  MCU_FREQUENCY_110592
+                              #ifdef BPS_9600
+                          TH1 = 0xFd;
+                          TL1 = 0xFd;
+                              #endif
+                              #ifdef BPS_2400
+                              TH1 = 0xF3;
+                              TL1 = 0xF3;
+                              #endif
+                      #endif
+  41   1              #ifdef MCU_FREQUENCY_12
+  42   1                      #ifdef BPS_2400
+  43   1                      TH1 = 0xF3;
+  44   1                      TL1 = 0xF3;
+  45   1                      #endif
+  46   1              #endif
+  47   1              #ifdef MCU_STC1T_12
+                              #ifdef BPS_2400
+                              TH1 = 0xF3;
+                              TL1 = 0xF3;
+                              #endif
+                      #endif
+  53   1      
+  54   1              ES = 1;         //(IE.4)允许串行中断
+  55   1      
+C51 COMPILER V7.10   SERIAL                                                                04/10/2016 10:18:45 PAGE 2   
+
+  56   1              //启动定时器1
+  57   1          TR1 = 1;
+  58   1      }
+  59          
+  60          /*********************************************************************
+  61           原型: void write_serial(uchar *pStr, int pStrLen)
+  62           功能: 发送数据
+  63          *********************************************************************/
+  64          #ifdef NEED_WIRTE_SERIAL
+  65          /*********************************************************************
+  66           原型: void writebyte_serial(uchar dat)
+  67           功能: 向串口发送一字节数据
+  68          *********************************************************************/
+  69          void writebyte_serial(uchar dat)
+  70          {
+  71   1              ES = 0;
+  72   1              SBUF = dat;
+  73   1              while(!TI);
+  74   1              TI = 0;
+  75   1              ES = 1;
+  76   1      }
+  77          void write_serial(uchar *pStr, int pStrLen)
+  78          {
+  79   1              uint i=0;
+  80   1      
+  81   1              if( pStrLen == -1 )
+  82   1              {
+  83   2                      for(i=0; pStr[i]!=0; i++)
+  84   2                              writebyte_serial(pStr[i]);
+  85   2              }
+  86   1              else
+  87   1              {
+  88   2                      for(i=0; i<pStrLen; i++)
+  89   2                              writebyte_serial(pStr[i]);
+  90   2              }
+  91   1      }
+  92          #endif
+  93          
+  94          /*********************************************************************
+  95           原型: void clear_serial()
+  96           功能: 清空串口缓存
+  97          *********************************************************************/
+  98          #ifdef NEED_CLEAR_SERIAL
+              void clear_serial()
+              {
+                      pread_serial = pwrite_serial;
+              }
+              #endif
+ 104          
+ 105          /*********************************************************************
+ 106           原型: uchar read_serial(uchar *pStr)
+ 107           功能: 从串口缓冲读取数据
+ 108          *********************************************************************/
+ 109          #ifdef NEED_READ_SERIAL
+ 110          uchar read_serial(uchar *pStr)
+ 111          {
+ 112   1              uchar ln=0;
+ 113   1      
+ 114   1              while( pread_serial != pwrite_serial )
+ 115   1              {
+ 116   2                      pStr[ln] = buff_serial[pread_serial];
+ 117   2                      ln++;
+C51 COMPILER V7.10   SERIAL                                                                04/10/2016 10:18:45 PAGE 3   
+
+ 118   2                      pread_serial = (pread_serial + 1 ) % MAXLEN_BUFF_SERIAL;
+ 119   2              }
+ 120   1              return ln;
+ 121   1      }
+ 122          #endif
+ 123          
+ 124          /*********************************************************************
+ 125           原型: uchar read2_serial(uchar *pStr)
+ 126           功能: 读串口数据,不丢弃数据
+ 127          *********************************************************************/
+ 128          #ifdef NEED_READ2_SERIAL
+              uchar read2_serial(uchar *pStr)
+              {
+                      uchar ln=0;
+                      uchar pread=0;
+              
+                      pread = pread_serial;
+                      while( pread != pwrite_serial )
+                      {
+                              pStr[ln] = buff_serial[pread];
+                              ln++;
+                              pread = (pread + 1 ) % MAXLEN_BUFF_SERIAL;
+                      }
+                      return ln;
+              }
+              #endif
+ 144          
+ 145          //串口中断函数, 读数据到串口缓冲
+ 146          void interrupt_serial() interrupt 4
+ 147          {
+ 148   1              ES = 0;                //关闭串行中断
+ 149   1              RI = 0;                //清除串行接收标志位
+ 150   1      
+ 151   1              buff_serial[pwrite_serial] = SBUF;  //从串口缓冲区取得数据
+ 152   1              pwrite_serial = (pwrite_serial + 1) % MAXLEN_BUFF_SERIAL;
+ 153   1      
+ 154   1              ES = 1;    //允许串口中断
+ 155   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    214    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     22       8
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

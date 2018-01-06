@@ -1,0 +1,216 @@
+C51 COMPILER V7.10   COON                                                                  04/15/2016 21:28:15 PAGE 1   
+
+
+C51 COMPILER V7.10, COMPILATION OF MODULE COON
+OBJECT MODULE PLACED IN coon.OBJ
+COMPILER INVOKED BY: d:\program files\Keil\C51\BIN\C51.EXE coon.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "coon.h"
+   2          #include <intrins.h>
+   3          
+   4          /*********************************************************************
+   5           原型: void delay_5us()
+   6           功能: 延时5us
+   7          *********************************************************************/
+   8          #ifdef NEED_5US_SLEEP
+   9          void delay_5us()
+  10          {
+  11   1              #ifdef MCU_FREQUENCY_12
+  12   1                      _nop_();
+  13   1              #endif
+  14   1      
+  15   1              #ifdef MCU_FREQUENCY_110592
+                              ;
+                      #endif
+  18   1      }
+  19          #endif
+  20          
+  21          /*********************************************************************
+  22           原型: void delay_10us()
+  23           功能: 延时10us
+  24          *********************************************************************/
+  25          #ifdef NEED_10US_SLEEP
+              void delay_10us()
+              {
+                      #ifdef MCU_FREQUENCY_12
+                              _nop_();    _nop_();
+                              _nop_();    _nop_();
+                              _nop_();    _nop_();
+                      #endif
+              
+                      #ifdef MCU_FREQUENCY_110592
+                              _nop_();    _nop_();
+                              _nop_();    _nop_();
+                              _nop_();    _nop_();
+                      #endif
+              }
+              #endif
+  41          
+  42          /*********************************************************************
+  43           原型: void delay_20us()
+  44           功能: 延时20us
+  45          *********************************************************************/
+  46          #ifdef NEED_20US_SLEEP
+  47          void delay_20us()
+  48          {
+  49   1              #ifdef MCU_FREQUENCY_12
+  50   1                      _nop_();    _nop_();
+  51   1                      _nop_();    _nop_();
+  52   1                      _nop_();    _nop_();
+  53   1                      _nop_();    _nop_();
+  54   1                      _nop_();    _nop_();
+  55   1                      _nop_();        _nop_();
+C51 COMPILER V7.10   COON                                                                  04/15/2016 21:28:15 PAGE 2   
+
+  56   1                      _nop_();        _nop_();
+  57   1                      _nop_();    _nop_();
+  58   1              #endif
+  59   1      
+  60   1              #ifdef MCU_FREQUENCY_110592
+                              _nop_();    _nop_();
+                              _nop_();    _nop_();
+                              _nop_();    _nop_();
+                              _nop_();    _nop_();
+                              _nop_();    _nop_();
+                              _nop_();        _nop_();
+                              _nop_();        _nop_();
+                              _nop_();    _nop_(); 
+                      #endif
+  70   1      }
+  71          #endif
+  72          
+  73          #ifdef NEED_MS_SLEEP
+  74          /*********************************************************************
+  75           原型: void delay_ms(uint pMS)
+  76           功能: 延时指定的毫秒时间pMS, 延时误差小于1%
+  77           参数: pMS     延时的毫秒数
+  78          *********************************************************************/
+  79          void delay_ms(uint pMS)
+  80          {
+  81   1              uchar i=0;
+  82   1              uchar j=0;
+  83   1      
+  84   1              #ifdef MCU_FREQUENCY_12
+  85   1                  if( pMS < 10 )   j=121;
+  86   1                      else if( pMS < 100 ) j=122;
+  87   1                      else j=123;
+  88   1              
+  89   1                      while(pMS--)
+  90   1                      {
+  91   2                              for(i=0; i<j; i++);
+  92   2                      }
+  93   1              #endif
+  94   1      
+  95   1              #ifdef MCU_FREQUENCY_110592
+                          if( pMS < 10 )   j=111;
+                              else if( pMS < 100 ) j=112;
+                              else j=113;
+                      
+                              while(pMS--)
+                              {
+                                      for(i=0; i<j; i++);
+                              }
+                      #endif
+ 105   1      }
+ 106          #endif
+ 107          
+ 108          #ifdef NEED_GETFIELD
+              /*********************************************************************
+               原型: uchar getNField(char *p_caSrc, uchar p_iIdx, char p_cSplit, char *p_caDst)
+               功能: 取得第p_iIdx个域的数据, p_iIdx(0..n)
+              *********************************************************************/
+              uchar getNField(char *p_caSrc, uchar p_iIdx, char p_cSplit, char *p_caDst)
+              {
+                      uchar i=0;
+                      uchar iIdx=0;
+                      uchar iStart=0;
+C51 COMPILER V7.10   COON                                                                  04/15/2016 21:28:15 PAGE 3   
+
+                      uchar iEnd=0;
+              
+                      for(i=0; p_caSrc[i]!=0; i++)
+                      {
+                      iEnd = i;
+                              if( p_caSrc[i] == p_cSplit )
+                              {
+                                      if( p_iIdx == iIdx ) break;
+                          
+                          iStart = i+1;
+                          iIdx++;
+                              }
+                              iEnd++;  //重要,修正最后一个不是分隔符的情况 
+                      }
+                      
+                      memcpy_std(p_caDst, p_caSrc+iStart, iEnd - iStart);
+              
+                      return iEnd - iStart;
+              }
+              #endif
+ 138          
+ 139          #ifdef NEED_STD_MEMCPY
+              /*********************************************************************
+               原型: void memcpy_std(uchar *p_dst, uchar *p_src, uchar p_ln)
+               功能: 取得第p_iIdx个域的数据, p_iIdx(0..n)
+              *********************************************************************/
+              void memcpy_std(uchar *p_dst, uchar *p_src, uchar p_ln)
+              {
+                      uchar i=0;
+              
+                      for(i=0; i<p_ln; i++)
+                              p_dst[i] = p_src[i];
+              }
+              #endif
+ 152          
+ 153          #ifdef NEED_STD_STRLEN
+              /*********************************************************************
+               原型: uchar strlen_std(uchar *str)
+               功能: 取ANSCII字符串长度
+              *********************************************************************/
+              uchar strlen_std(uchar *str)
+              {
+                      uchar i=0;
+                      while( str[i++] != 0 ) ;
+                      return i-1;
+              }
+              #endif
+ 165          
+ 166          #ifdef NEED_CHAR2HEX
+              /*********************************************************************
+               原型: void char2hex(char *src, int ln, char *dst)
+               功能: 将字符串扩展为16进制形式
+              *********************************************************************/
+              void char2hex(char *src, int ln, char *dst)
+              {
+                  int d=0, d1=0, d2=0, i=0;
+                  
+                  for(i=0; i<ln; i++)
+                  {
+                      d = src[i]&0xFF;
+                      d1 = d / 16;
+                      d2 = d % 16;
+C51 COMPILER V7.10   COON                                                                  04/15/2016 21:28:15 PAGE 4   
+
+                      if(  0<=d1 && d1<=9  ) dst[i*2+0] = d1+0x30;
+                      if( 10<=d1 && d1<=15 ) dst[i*2+0] = d1+0x41-10;
+                      if(  0<=d2 && d2<=9  ) dst[i*2+1] = d2+0x30;
+                      if( 10<=d2 && d2<=15 ) dst[i*2+1] = d2+0x41-10;
+                  }
+              }
+              #endif
+ 187          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     68    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
