@@ -1,8 +1,0 @@
-"main.obj",
-"coon.obj",
-"HCSR04.obj",
-"LCD12864.obj",
-"HX711.obj",
-"IndepKey.obj" 
-TO "project" 
-RAMSIZE(256) 
