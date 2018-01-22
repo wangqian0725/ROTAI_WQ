@@ -1,0 +1,10 @@
+Removed Pin From Net: NetName=PD6 Pin=J1-3
+Removed Pin From Net: NetName=PD5 Pin=J1-4
+Removed Pin From Net: NetName=VCC Pin=J1-5
+Removed Member From Class: ClassName=ultrasound module1.0 - ¸Ä Member=R9
+Change Component Footprint: Designator=J1 Old Footprint=HA-5A New Footprint=HA-4A
+Change Component Comment : Designator=J1 Old Comment=CON-5 New Comment=HA-4A(À¶É«)
+Added Pin To Net: NetName=PD6 Pin=J1-2
+Added Pin To Net: NetName=PD5 Pin=J1-3
+Added Pin To Net: NetName=VCC Pin=J1-4
+Added Room: Name=ultrasound module1.0 - ¸Ä
