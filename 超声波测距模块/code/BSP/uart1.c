@@ -11,7 +11,7 @@ void UART1_Congfiguration(void)
     //配置串口参数为：波特率115200，8位数据位，1位停止位，无校验，禁止同步传输，允许接收发送
     UART1_Init((u32)9600,UART1_WORDLENGTH_8D,UART1_STOPBITS_1,UART1_PARITY_NO,UART1_SYNCMODE_CLOCK_DISABLE,UART1_MODE_TXRX_ENABLE);
     UART1_ITConfig(UART1_IT_RXNE_OR, ENABLE);//使能接收中断
-    UART1_Cmd(ENABLE);//使能UART1
+    UART1_Cmd(ENABLE);//使能UART1        
 }
 
 /*********************************************************************************

@@ -10,9 +10,12 @@ void bsp_init(void);
 ***********************************************************************/
 void main(void)
 {
-  bsp_init();
-  delay_ms(10);//延时10ms等待初始化完成
-  while(1);
+    bsp_init();
+    delay_ms(10);//等待初始化完成
+    rim();
+    while(1)
+  {
+  }
 }
 
 /***********************************************************************
@@ -36,9 +39,6 @@ void bsp_init(void)
 #ifdef USE_FULL_ASSERT
 void assert_failed(u8* file,u32 line)
 {
-  bsp_init();
-  while(1)
-  {
-  }
+
 }
 #endif
